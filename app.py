@@ -1,199 +1,253 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import joblib
+import base64
 
-# Load trained model
+# ---------------- LOAD MODEL ----------------
 model = joblib.load("fraud_model.pkl")
 
-# Page configuration
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="AI Fraud Detection System",
     page_icon="💳",
     layout="wide"
 )
 
-# Sidebar
-st.sidebar.title("💳 Fraud Detection System")
+# ---------------- ALERT SOUND FUNCTION ----------------
+def play_alert_sound():
+    with open("alarm.mp3", "rb") as audio_file:
+        audio_bytes = audio_file.read()
 
-st.sidebar.markdown("""
-### Project Information
+    encoded = base64.b64encode(audio_bytes).decode()
 
-**Project:**  
-Credit Card Fraud Detection Using Machine Learning
+    st.markdown(
+        f"""
+        <audio autoplay>
+            <source src="data:audio/mp3;base64,{encoded}" type="audio/mp3">
+        </audio>
+        """,
+        unsafe_allow_html=True
+    )
 
-**Model Used:**  
-Random Forest Classifier
-
-**Technology Stack:**  
-- Python
-- Streamlit
-- Scikit-Learn
-- Machine Learning
-
-**Purpose:**  
-Detect fraudulent credit card transactions in real time.
-""")
-
-st.sidebar.success("System Status: ACTIVE")
-
-# Main title
-st.title("💳 AI-Based Credit Card Fraud Detection System")
-
+# ---------------- DARK THEME (MAIN + SIDEBAR) ----------------
 st.markdown("""
-This intelligent system analyzes transaction patterns and predicts whether a transaction is:
+<style>
 
-- ✅ Genuine
-- 🚨 Fraudulent
+/* MAIN APP */
+.stApp {
+    background-color: #0E1117;
+    color: white;
+}
 
-The prediction is powered by a Machine Learning model trained on credit card transaction data.
-""")
+/* TEXT */
+h1, h2, h3, h4, h5, h6, p, label, div {
+    color: white;
+}
 
-# Dashboard metrics
-col1, col2, col3 = st.columns(3)
+/* BUTTON */
+.stButton>button {
+    background-color: #FF4B4B;
+    color: white;
+    border-radius: 10px;
+    height: 3em;
+    width: 100%;
+    font-size: 18px;
+    border: none;
+}
 
-with col1:
-    st.metric(
-        label="Model Accuracy",
-        value="99.99%"
+/* INPUT */
+.stTextInput>div>div>input {
+    background-color: #262730;
+    color: white;
+}
+
+/* SIDEBAR BACKGROUND */
+[data-testid="stSidebar"] {
+    background-color: #0B0F19;
+}
+
+/* SIDEBAR TEXT */
+[data-testid="stSidebar"] * {
+    color: white;
+}
+
+/* SIDEBAR HEADINGS */
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: #ffffff;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- LOGIN SYSTEM ----------------
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+
+    st.title("🔐 Secure Banking Login")
+
+    st.image(
+        "https://cdn-icons-png.flaticon.com/512/2489/2489756.png",
+        width=120
     )
 
-with col2:
-    st.metric(
-        label="Detection Status",
-        value="ACTIVE"
-    )
+    st.markdown("### Welcome to AI Fraud Detection Portal")
 
-with col3:
-    st.metric(
-        label="ML Model",
-        value="Random Forest"
-    )
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
 
-st.divider()
+    if st.button("Login"):
 
-# Transaction Input Section
-st.subheader("📊 Transaction Analysis")
+        if username == "admin" and password == "admin123":
+            st.session_state.logged_in = True
+            st.rerun()
+        else:
+            st.error("❌ Invalid Username or Password")
 
-left_col, right_col = st.columns(2)
+# ---------------- MAIN APP ----------------
+else:
 
-with left_col:
+    # Sidebar
+    st.sidebar.title("💳 Fraud Detection Dashboard")
 
-    amount = st.number_input(
-        "Transaction Amount ($)",
-        min_value=0.0,
-        value=250.0
-    )
+    st.sidebar.success("🟢 AI Engine Active")
+    st.sidebar.success("🟢 Fraud Monitoring Running")
+    st.sidebar.success("🟢 Bank Server Connected")
 
-    time = st.number_input(
-        "Transaction Time",
-        min_value=0.0,
-        value=12.0
-    )
+    st.sidebar.markdown("""
+    ### Technology Stack
+    - Python
+    - Streamlit
+    - Machine Learning
+    - Random Forest
+    - AI Fraud Analytics
+    """)
 
-    transaction_count = st.number_input(
-        "Transactions Today",
-        min_value=0,
-        value=2
-    )
+    # Header
+    st.title("💳 AI-Based Credit Card Fraud Detection System")
 
-with right_col:
+    st.markdown("""
+    This AI system analyzes transactions and detects fraud in real time using Machine Learning.
+    """)
 
-    location_risk = st.slider(
-        "Location Risk Score",
-        0,
-        10,
-        2
-    )
+    # Inputs
+    amount = st.number_input("Transaction Amount ($)", min_value=0.0, value=250.0)
+    time = st.number_input("Transaction Time", min_value=0.0, value=12.0)
+    transaction_count = st.number_input("Transactions Today", min_value=0, value=2)
 
-    merchant_risk = st.slider(
-        "Merchant Risk Score",
-        0,
-        10,
-        3
-    )
+    location_risk = st.slider("Location Risk Score", 0, 10, 2)
+    merchant_risk = st.slider("Merchant Risk Score", 0, 10, 3)
+    device_risk = st.slider("Device Risk Score", 0, 10, 1)
 
-    device_risk = st.slider(
-        "Device Risk Score",
-        0,
-        10,
-        1
-    )
+    # Analyze button
+    if st.button("🔍 Analyze Transaction"):
 
-st.divider()
+        # Feature vector
+        data = np.zeros(30)
+        data[0] = amount
+        data[1] = time
+        data[2] = transaction_count
+        data[3] = location_risk
+        data[4] = merchant_risk
+        data[5] = device_risk
 
-# Prediction Button
-if st.button("🔍 Analyze Transaction", use_container_width=True):
+        data = data.reshape(1, -1)
 
-    # Create 30-feature array
-    data = np.zeros(30)
+        prediction = model.predict(data)
 
-    # Assign sample values
-    data[0] = amount
-    data[1] = time
-    data[2] = transaction_count
-    data[3] = location_risk
-    data[4] = merchant_risk
-    data[5] = device_risk
+        # Risk logic
+        fraud_score = 0
 
-    # Reshape for prediction
-    data = data.reshape(1, -1)
+        if amount > 50000:
+            fraud_score += 30
+        if location_risk >= 8:
+            fraud_score += 20
+        if merchant_risk >= 8:
+            fraud_score += 20
+        if device_risk >= 8:
+            fraud_score += 20
+        if transaction_count > 15:
+            fraud_score += 10
 
-    # Predict
-    prediction = model.predict(data)
+        st.subheader("📌 Prediction Result")
 
-    st.subheader("📌 Prediction Result")
+        # ---------------- LOW RISK ----------------
+        if fraud_score < 30:
 
-    if prediction[0] == 1:
+            st.markdown("""
+            <style>
+            .stApp { background-color: #d8f5d0; color: black; }
+            h1,h2,h3,h4,h5,h6,p,label,div { color: black; }
+            </style>
+            """, unsafe_allow_html=True)
 
-        st.error("""
-🚨 FRAUD ALERT
+            st.success("✅ LOW RISK - GENUINE TRANSACTION")
 
-This transaction shows suspicious activity patterns.
+        # ---------------- MEDIUM RISK ----------------
+        elif fraud_score < 60:
 
-Recommended Action:
-- Block transaction
-- Request OTP verification
-- Notify bank security team
-""")
+            st.markdown("""
+            <style>
+            .stApp { background-color: #fff4cc; color: black; }
+            h1,h2,h3,h4,h5,h6,p,label,div { color: black; }
+            </style>
+            """, unsafe_allow_html=True)
 
-        risk_score = 92
+            st.warning("⚠ MEDIUM RISK TRANSACTION")
 
-    else:
+        # ---------------- HIGH RISK ----------------
+        else:
 
-        st.success("""
-✅ GENUINE TRANSACTION
+            st.markdown("""
+            <style>
+            .stApp { background-color: #ffd6d6; color: black; }
+            h1,h2,h3,h4,h5,h6,p,label,div { color: black; }
+            </style>
+            """, unsafe_allow_html=True)
 
-This transaction appears safe and legitimate.
-""")
+            st.error("🚨 HIGH RISK FRAUD DETECTED")
 
-        risk_score = 12
+            # 🔊 SOUND ALERT
+            play_alert_sound()
 
-    # Risk analysis
-    st.subheader("📈 Fraud Risk Analysis")
+        # Progress bar
+        st.progress(fraud_score / 100)
+        st.write(f"Fraud Risk Score: {fraud_score}%")
 
-    st.progress(risk_score / 100)
+        # Pie chart
+        fig, ax = plt.subplots()
+        ax.pie(
+            [fraud_score, 100 - fraud_score],
+            labels=["Fraud Risk", "Safe"],
+            autopct='%1.1f%%'
+        )
+        st.pyplot(fig)
 
-    st.write(f"Fraud Risk Score: {risk_score}%")
+        # Table
+        result_data = pd.DataFrame({
+            "Parameter": [
+                "Transaction Amount",
+                "Transaction Time",
+                "Transactions Today",
+                "Location Risk",
+                "Merchant Risk",
+                "Device Risk"
+            ],
+            "Value": [
+                amount,
+                time,
+                transaction_count,
+                location_risk,
+                merchant_risk,
+                device_risk
+            ]
+        })
 
-    # Summary table
-    result_data = pd.DataFrame({
-        "Parameter": [
-            "Transaction Amount",
-            "Location Risk",
-            "Merchant Risk",
-            "Device Risk"
-        ],
-        "Value": [
-            amount,
-            location_risk,
-            merchant_risk,
-            device_risk
-        ]
-    })
+        st.table(result_data)
 
-    st.table(result_data)
-
-st.divider()
-
-st.caption("Developed for M.Tech Project Demonstration")
+    st.caption("Developed for M.Tech Project Demonstration")
